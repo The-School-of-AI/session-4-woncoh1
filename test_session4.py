@@ -7,6 +7,7 @@ import math
 from decimal import *
 
 import session4
+import test_session4
 from session4 import Qualean
 
 README_CONTENT_CHECK_FOR = [
