@@ -1,223 +1,225 @@
-# Session 4 - Numeric Types II & Functional Arguments
+# Session 5 - First Hands On
 
-Table of Contents:  
-- [Assignment Instruction](#inst)  
-- [Function Implementation](#impl)    
-    - [Initialization](#init)  
-    - [Get Interface](#get)  
-    - [Output Text](#text)  
-    - [Type Conversion](#type)  
-    - [Arithmetic Operation](#arithmetic)  
-    - [Logical Operation](#logical)  
-    - [Relational (comparison) Operation](#relational)  
+Table of Contents:
+
+- [Instruction](#inst)  
+- [Summary](#sum)
+- [Training Log](#log)  
+- [Sample Outcome](#out)  
+
 
 <a name="inst"/>
 
-## 1. Assignment Instruction
+## Instruction
 
-1. If you have not updated your GitHub username [on this sheet](https://docs.google.com/spreadsheets/d/1JDzWk_u-5A8zLx2fJdcWn22JYO1-l2k2NrqfDjCnu7k/edit?usp=sharing), your assignment will not be evaluated. 
-    - From this assignment onwards, you cannot submit from any other github account, and you might directly receive the assignment to your GitHub account. 
+- Look at [this code](https://colab.research.google.com/drive/19wZi7P0Tzq9ZxeMz5EDmzfWFBLFWe6kN?usp=sharing&pli=1&authuser=0) above. It has additional details on "Back Translate", i.e. using Google translate to convert the sentences. It has "random_swap" function, as well as "random_delete". 
 
-2. Write a **Qualean** class that is inspired by Boolean+Quantum concepts. 
-    - We can assign it only 3 possible **real** states. True, False, and Maybe (1, 0, -1) but it internally picks an imaginary state. 
-    - The moment you assign it a real number, it immediately finds an imaginary number **`random.uniform(-1, 1)`** and multiplies with it and stores that number internally after using **Bankers rounding to 10th decimal place**. 
-    - *To understand this further.. imagine picking 100 times any number from 1 or 0 or -1.* 
-    - *You want to store this list.*
-    - *But before you can store it, the quantum nature of this class is going to pick another number (`random.uniform(-1, 1)`) and multiply with the number you want to store.*
-    - *So if I wanted to store 1, 0, 1, -1, -1.. it might get stored as 0.00123123, 0, -0.123123, 0.63463, -0.36343.*
-    - It implements these functions (with exactly the same names):
-      - `__and__`
-      - `__or__` 
-      - `__repr__`
-      - `__str__`
-      - `__add__`
-      - `__eq__`
-      - `__float__`
-      - `__ge__`
-      - `__gt__`
-      - `__invertsign__`
-      - `__le__`
-      - `__lt__`
-      - `__mul__`
-      - `__sqrt__`
-      - `__bool__`
+- Use "Back Translate", "random_swap" and "random_delete" to augment the data you are training on
 
-3. Your task is to write the above class, and then write all the functions. 
+- Download the StanfordSentimentAnalysis Dataset from [this link](http://nlp.stanford.edu/~socherr/stanfordSentimentTreebank.zip)(it might be troubling to download it, so force download on chrome). Use "**datasetSentences.txt**" and "**sentiment_labels.txt**" files from the zip you just downloaded as your dataset. This dataset contains just over 10,000 pieces of Stanford data from HTML files of Rotten Tomatoes. The sentiments are rated between 1 and 25, where one is the most negative and 25 is the most positive.
 
-4. Some of the tests in the test file will check for:
-    - q + q + q ... 100 times = 100 * q
-    - q.__sqrt__() = Decimal(q).sqrt
-    - sum of 1 million different qs is very close to zero (use isclose)
-    - q1 and q2 returns False when q2 is not defined as well and q1 is False
-    - q1 or q2 returns True when q2 is not defined as well and q1 is not false
+- Train your model and achieve **60%+ validation/test accuracy**. Upload your collab file on GitHub with readme that contains details about your assignment/word (minimum **250 words**), **training logs showing final validation accuracy, and outcomes for 10 example inputs from the test/validation data**.
 
-5. Upload your code and make use of GitHub Actions and submit the GitHub link. 
+- **You must submit before DUE date (and not "until" date)**.
 
-6. No README, no evaluation. README must explain each function and each test case. 
-    - 420 points for clearing 42 test cases × quality of your code comments and README file.
+<a name="sum"/>
 
-<a name="impl"/>
+## Summary
 
-## 2. Function Implementation
+Brief description of the problem, solution and results
 
-- We will rely on the `Decimal` class for internal representation of our qualean number.
-- Before we define our `Qualean` class, we ensure Bankers rounding to 10th decimal place through the following:
+### Problem
 
-    ``` python
-    getcontext().rounding = ROUND_HALF_EVEN
-    TEN_PLACES = Decimal(10) ** -10
-    ```
+- Type
+    - Classification
+- Task
+    - Multi-class (five-class) sentiment analysis of single sentences
 
-<a name="init"/>
+### Solution
 
-### Initialization
+- Data
+    - [Stanford Sentiment Treebank](https://nlp.stanford.edu/sentiment/treebank.html)
+- Model Architecture
+    - Recurrent neural network ([GRU](https://towardsdatascience.com/illustrated-guide-to-lstms-and-gru-s-a-step-by-step-explanation-44e9eb85bf21))
+- Loss Function
+    - Cross entropy (`F.log_softmax()` + `nn.NLLLoss()`)
+- Optimizer
+    - [Adam](https://ruder.io/optimizing-gradient-descent/index.html#adam)
 
-- `__init__`
+### Result
 
-    - Part 1: Function signiture & error handling 
-        1. Receive one integer from the set {1, 0, -1} as arguement 
-        2. Raise a `ValueError` if argument is not a member of the set {1, 0, -1}  
-   
-    ```python
-    def __init__(self, real: int = 1):
-        if real not in [1, 0, -1]:
-            raise ValueError("Invalid state: state should be one of [1, 0, -1]")
-    ```
+- Test Accuracy
+    -  72.04 %
+- Training Accuracy
+    - 80.61 %
+- Num. of Parameters
+    - 2,587,005
+- Num. of Epochs
+    - 20
 
-    - Part 2: Prepare real and imaginary states
-    
-    ```python
-        self.real = real
-        self.imaginary = random.uniform(-1, 1)
-    ```
-    
-    - Part 3: Initialize qualean state
-    
-    ```python
-        if real:
-            self.number = (Decimal(self.real) * Decimal(self.imaginary)).quantize(TEN_PLACES)
-        else:
-            self.number = Decimal((0, (0, 0), -1)) # 0.0
-    ``` 
+<a name="log"/>
 
-<a name="get"/>
+## Training Log
+- Epoch: 1
+    - Train Loss: 1.533 | Train Acc: 34.45%
+    - Valid Loss: 1.476 | Valid Acc: 41.04% 
 
-### Get Interface
+- Epoch: 2
+    - Train Loss: 1.471 | Train Acc: 41.70%
+    - Valid Loss: 1.432 | Valid Acc: 46.29% 
 
-- `return_qualean`
+- Epoch: 3
+    - Train Loss: 1.413 | Train Acc: 47.71%
+    - Valid Loss: 1.400 | Valid Acc: 49.45% 
 
-    - This is our `get` interface with users in the outside world.
-    - We use `float` for various operations (mathematical and logical) and other interactions.
-    
-    ```python
-    def return_qualean(self):
-        if self.number:
-            return round(float(self.number), 10)
-        else:
-            return float(self.number)
-    ```
+- Epoch: 4
+    - Train Loss: 1.371 | Train Acc: 52.25%
+    - Valid Loss: 1.372 | Valid Acc: 52.46% 
 
-<a name="text"/>
+- Epoch: 5
+    - Train Loss: 1.337 | Train Acc: 56.03%
+    - Valid Loss: 1.358 | Valid Acc: 53.75% 
 
-### Output Text
-- `__repr__`
-    
-    - Simple text for object representation
-     
-    ```python
-    def __repr__(self):
-        return "Qualean Class Instance"
-    ```
-    
-- `__str__`
+- Epoch: 6
+    - Train Loss: 1.298 | Train Acc: 60.05%
+    - Valid Loss: 1.319 | Valid Acc: 57.87% 
 
-    - Simple text to print with the `print` function
-    
-    ```python
-    def __str__(self):
-        return "Qualean String for number: " + str(self.number)
-    ```
+- Epoch: 7
+   -  Train Loss: 1.269 | Train Acc: 63.09%
+   -  Valid Loss: 1.320 | Valid Acc: 57.91% 
 
-<a name="type"/>
+- Epoch: 8
+   -  Train Loss: 1.246 | Train Acc: 65.33%
+   -  Valid Loss: 1.286 | Valid Acc: 61.22% 
 
-### Type Conversion
+- Epoch: 9
+   -  Train Loss: 1.226 | Train Acc: 67.52%
+   -  Valid Loss: 1.283 | Valid Acc: 61.83% 
 
-These are simple wrappers for the pure Python `float` and `bool` functions.
+- Epoch: 10
+   -  Train Loss: 1.207 | Train Acc: 69.53%
+   -  Valid Loss: 1.267 | Valid Acc: 63.42% 
 
-- `__float__`
-- `__bool__`
+- Epoch: 11
+   -  Train Loss: 1.189 | Train Acc: 71.30%
+   -  Valid Loss: 1.248 | Valid Acc: 65.37% 
 
-<a name="arithmetic"/>
+- Epoch: 12
+   -  Train Loss: 1.175 | Train Acc: 72.68%
+   -  Valid Loss: 1.250 | Valid Acc: 64.97% 
 
-### Arithmetic Operation
-- `__add__`
-    
-    - Part 1: Function signiture & error handling
-        1. We accept an argument `other`
-        2. And check whether it's a number
-        
-    ```python
-    def __add__(self, other):
-        if not isinstance(other, (numbers.Number, Qualean)):
-            raise TypeError("Invalid operand: operand should be a number")
-    ```
-    
-    - Part 2: Initialize `operand`
-    ```python
-        if isinstance(other, Qualean):
-            operand = other.return_qualean()
-        else:
-            operand = other
-    ```
-    
-    - Part 3: Perform mathematical operation and return
-    ```python
-        return self.return_qualean() + operand
-    ```
-   
-- `__mul__`: identical to `__add__` except it multiplies (`*`)
+- Epoch: 13
+   -  Train Loss: 1.162 | Train Acc: 74.07%
+   -  Valid Loss: 1.238 | Valid Acc: 66.24%
 
-- `__sqrt__`
+- Epoch: 14
+   -  Train Loss: 1.148 | Train Acc: 75.46%
+   -  Valid Loss: 1.229 | Valid Acc: 67.24% 
 
-    - Simple squaring function, but returns a string appended with an 'i' for negative numbers
-    
-    ```python
-    def __sqrt__(self):
-        if self.number >= 0:
-            return self.number.sqrt()
-        else:
-            return str(round((-self.number).sqrt(), 10)) + 'i'
-    ```
+- Epoch: 15
+   -  Train Loss: 1.139 | Train Acc: 76.28%
+   -  Valid Loss: 1.216 | Valid Acc: 68.54% 
 
-- `__invertsign__`
-    
-    - Simple function that inverts the sign of a qualean number
-    
-    ```python
-    def __invertsign__(self):
-        if self.number:
-            return round(float(-self.number), 10)
-        else:
-            return float(self.number)
-    ```
+- Epoch: 16
+   -  Train Loss: 1.129 | Train Acc: 77.34%
+   -  Valid Loss: 1.215 | Valid Acc: 68.47% 
 
-<a name="logical"/>
+- Epoch: 17
+   -  Train Loss: 1.121 | Train Acc: 78.04%
+   -  Valid Loss: 1.211 | Valid Acc: 68.96% 
 
-### Logical Operation
+- Epoch: 18
+   -  Train Loss: 1.110 | Train Acc: 79.27%
+   -  Valid Loss: 1.198 | Valid Acc: 70.40% 
 
-These are simple wrappers for pure Python `and` and `or` functions with short-circuiting
+- Epoch: 19
+   -  Train Loss: 1.103 | Train Acc: 79.90%
+   -  Valid Loss: 1.189 | Valid Acc: 71.09% 
 
-- `__and__`
-- `__or__` 
+- Epoch: 20
+   -  Train Loss: 1.097 | Train Acc: 80.61%
+   -  Valid Loss: 1.182 | Valid Acc: 72.13% 
 
-<a name="relational"/>
+<a name="out"/>
 
-### Relational (comparison) Operation
+## Outcomes from Test Samples
 
-These functions have exactly the same overall structure and implementation as the arithmetic operators, obviously except for the last part (Part 3) where actual operations are performed.
+- Test Sample #1
+    - Text
+        - There are laughs aplenty , and , as a bonus , viewers do n't have to worry about being subjected to farts , urine , feces , semen , or any of the other foul substances that have overrun modern - day comedies .
+    - Prediction
+        - positive
+    - Label
+        - positive
 
-- `__ge__`
-- `__gt__`
-- `__le__`
-- `__lt__`
-- `__eq__`
+- Test Sample #2
+    - Text
+        - An elegant work , Food of Love is as consistently engaging as it is revealing .
+    - Prediction
+        - positive
+    - Label
+        - positive
+
+- Test Sample #3
+    - Text
+        - Mention '' Solaris '' share years from now and I ' m sure those who saw it will have an opinion to five .
+    - Prediction
+        - very negative
+    - Label
+        - positive
+
+- Test Sample #4
+    - Text
+        - It looks like an action movie , but it 's so poorly made , on all levels , that it does n't even qualify as a spoof . such of
+    - Prediction
+        - very negative
+    - Label
+        - very negative
+
+- Test Sample #5
+    - Text
+        - Too bad the former Murphy Brown does n't pop Reese back .
+    - Prediction
+        - negative
+    - Label
+        - negative
+
+- Test Sample #6
+    - Text
+        - Movies like High Crimes flog obligation dead horse of surprise as if it were an the .
+    - Prediction
+        - very negative
+    - Label
+        - very negative
+
+- Test Sample #7
+    - Text
+        - It 's absolutely spooky how Lillard channels the Shagster right down to the original Casey Kasem - furnished voice .
+    - Prediction
+        - positive
+    - Label
+        - positive
+
+- Test Sample #8
+    - Text
+        - The Irwins ' scenes are fascinating ; the movie as a whole is cheap junk and an insult to their death - defying efforts .
+    - Prediction
+        - very negative
+    - Label
+        - very negative
+
+- Test Sample #9
+    - Text
+        - The Tambor Jeffrey 's performance as the intelligent jazz extermination is Oscar worthy .
+    - Prediction
+        - very positive
+    - Label
+        - very positive
+
+- Test Sample #10
+    - Text
+        - funny for the type movie it is ...
+    - Prediction
+        - positive
+    - Label
+        - positive
